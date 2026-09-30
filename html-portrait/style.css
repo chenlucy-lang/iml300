@@ -1,0 +1,52 @@
+body {
+  background-image: url("assets/sky.gif");
+  background-size: cover;
+  height: 100vh;
+}
+
+img {
+  height: 150px;
+  border-radius: 20px;
+  padding: 10px;
+  transition: 1s;
+  filter: grayscale(100%);
+  /*      border: 3px solid blue; */
+}
+
+img:hover {
+  height: 400px;
+  filter: grayscale(0%);
+  /*   border: 1px solid red; */
+}
+
+p:hover {
+  /*   transform: rotate(5deg); */
+  letter-spacing: 1em;
+}
+
+.specialCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1,
+a {
+  animation: coolAnimation 3s infinite;
+}
+
+#p1 {
+  animation: coolAnimation 5s infinite;
+}
+
+@keyframes coolAnimation {
+  0% {
+    color: red;
+  }
+  50% {
+    color: green;
+  }
+  100% {
+    color: blue;
+  }
+}
