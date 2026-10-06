@@ -1,0 +1,7 @@
+img[src="lucy.jpg"] {
+  transition: transform 0.3s ease;
+}
+
+img[src="lucy.jpg"]:hover {
+  transform: scale(1.1);
+}
