@@ -3,5 +3,24 @@ img[src="lucy.jpg"] {
 }
 
 img[src="lucy.jpg"]:hover {
-  transform: scale(1.1);
+  transform: scale(1.02);
+}
+
+p {
+  font-family: Arial; /* web safe fonts: http://www.w3schools.com/cssref/css_websafe_fonts.asp */
+  font-size: 10px;
+  line-height: 1em; /* 1 em = the currently specified font size */
+}
+body {
+  font-family: "Arial", sans-serif;
+  background: linear-gradient(yellow, green);
+}
+h1 {
+  color: rgba(0, 0, 255, 0.6);
+}
+a {
+  text-decoration: none; 
+}
+a:hover {
+  text-decoration: underline; 
 }
