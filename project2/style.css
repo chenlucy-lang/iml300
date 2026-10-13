@@ -1,3 +1,66 @@
-body {
-    color:lawngreen
+/* Append this to your style.css */
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+.hero {
+  position: fixed;          /* fills the whole window */
+  inset: 0;
+  overflow: hidden;         /* crops the oversized image so edges never show */
+  background: #000;         /* fallback only; should never be visible */
+  perspective: 200vmax;     /* 2x the larger window side, keeps the tilt safe at any size */
+}
+
+.hero-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;        /* image always covers the page, no gaps */
+  transform: scale(1.1) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transition: transform 0.6s ease-out;   /* smooths movement between zones */
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Invisible 5x5 grid of hover zones covering the page */
+.zones {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template: repeat(5, 1fr) / repeat(5, 1fr);
+}
+
+/* Tilt per zone (max 5 degrees). Row = up/down, column = left/right */
+.hero:has(.zones span:nth-child(1):hover) { --tilt-x: 5deg; --tilt-y: -5deg; }
+.hero:has(.zones span:nth-child(2):hover) { --tilt-x: 5deg; --tilt-y: -2.5deg; }
+.hero:has(.zones span:nth-child(3):hover) { --tilt-x: 5deg; --tilt-y: 0deg; }
+.hero:has(.zones span:nth-child(4):hover) { --tilt-x: 5deg; --tilt-y: 2.5deg; }
+.hero:has(.zones span:nth-child(5):hover) { --tilt-x: 5deg; --tilt-y: 5deg; }
+.hero:has(.zones span:nth-child(6):hover) { --tilt-x: 2.5deg; --tilt-y: -5deg; }
+.hero:has(.zones span:nth-child(7):hover) { --tilt-x: 2.5deg; --tilt-y: -2.5deg; }
+.hero:has(.zones span:nth-child(8):hover) { --tilt-x: 2.5deg; --tilt-y: 0deg; }
+.hero:has(.zones span:nth-child(9):hover) { --tilt-x: 2.5deg; --tilt-y: 2.5deg; }
+.hero:has(.zones span:nth-child(10):hover) { --tilt-x: 2.5deg; --tilt-y: 5deg; }
+.hero:has(.zones span:nth-child(11):hover) { --tilt-x: 0deg; --tilt-y: -5deg; }
+.hero:has(.zones span:nth-child(12):hover) { --tilt-x: 0deg; --tilt-y: -2.5deg; }
+.hero:has(.zones span:nth-child(13):hover) { --tilt-x: 0deg; --tilt-y: 0deg; }
+.hero:has(.zones span:nth-child(14):hover) { --tilt-x: 0deg; --tilt-y: 2.5deg; }
+.hero:has(.zones span:nth-child(15):hover) { --tilt-x: 0deg; --tilt-y: 5deg; }
+.hero:has(.zones span:nth-child(16):hover) { --tilt-x: -2.5deg; --tilt-y: -5deg; }
+.hero:has(.zones span:nth-child(17):hover) { --tilt-x: -2.5deg; --tilt-y: -2.5deg; }
+.hero:has(.zones span:nth-child(18):hover) { --tilt-x: -2.5deg; --tilt-y: 0deg; }
+.hero:has(.zones span:nth-child(19):hover) { --tilt-x: -2.5deg; --tilt-y: 2.5deg; }
+.hero:has(.zones span:nth-child(20):hover) { --tilt-x: -2.5deg; --tilt-y: 5deg; }
+.hero:has(.zones span:nth-child(21):hover) { --tilt-x: -5deg; --tilt-y: -5deg; }
+.hero:has(.zones span:nth-child(22):hover) { --tilt-x: -5deg; --tilt-y: -2.5deg; }
+.hero:has(.zones span:nth-child(23):hover) { --tilt-x: -5deg; --tilt-y: 0deg; }
+.hero:has(.zones span:nth-child(24):hover) { --tilt-x: -5deg; --tilt-y: 2.5deg; }
+.hero:has(.zones span:nth-child(25):hover) { --tilt-x: -5deg; --tilt-y: 5deg; }
+
+body,
+h1, h2, h3, h4, h5, h6,
+p, a, span, li, button, input, textarea, label {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #0a1f5c;
 }
