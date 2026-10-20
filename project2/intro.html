@@ -1,32 +1,88 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Title</title>
+  <title>Intro</title>
+  <link rel="stylesheet" href="style.css">
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-    }
-
-    body {
+    /* Frame = the image's exact shape (2388 x 1668), as big as fits the window */
+    .intro {
+      position: fixed;
+      inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #fff;
-      font-family: Georgia, "Times New Roman", serif;
-      color: #0a1f5c; /* dark blue */
-      text-align: center;
+      background: #000;
+      container-type: size;       /* lets the frame measure the real visible area */
     }
 
-    p {
-      font-size: 2rem;
-      padding: 0 1.5rem;
+    .intro .frame {
+      width: min(100vw, calc(100vh * 2388 / 1668));
+      width: min(100cqw, calc(100cqh * 2388 / 1668));
+      aspect-ratio: 2388 / 1668;
+      position: relative;
+      overflow: hidden;           /* crops the zoomed-in edges, where the white outline is */
+    }
+
+    /* Both images sit stacked with identical sizing and scaling */
+    .intro .everything {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.015);    /* zooms in ~1.5% so the image's edge pixels fall outside the frame */
+      transition: opacity 0.3s ease-out;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .intro .everything.hover {
+      opacity: 0;                 /* hidden until the cursor is over the image */
+    }
+
+    /* intro.js adds .is-hover to the frame while the cursor is over the image */
+    .intro .frame.is-hover .everything.hover {
+      opacity: 1;
+    }
+
+    .intro .frame.is-hover .everything.base {
+      opacity: 0;
     }
   </style>
 </head>
 <body>
-  <p>This page will house the exposition/intro of the game</p>
+  <div class="intro">
+    <div class="frame">
+      <img class="everything base" src="everything.png" alt="">
+      <img class="everything hover" src="everything2.png" alt="">
+    </div>
+  </div>
+
+  <script src="intro.js" defer></script>
+
+  <audio id="ice" src="ice.mp3" preload="auto"></audio>
+
+  <script>
+    const LOOP = false;   // true = repeat ice.mp3 until you leave the page
+
+    const sound = document.getElementById('ice');
+    sound.loop = LOOP;
+
+    // Try to start right away. You just clicked Start, so most browsers allow it.
+    sound.play().catch(() => {
+      // Some browsers (Safari especially) block sound until you interact with the page.
+      // If that happens, start it on the first click, tap or key press instead.
+      const startOnInteraction = () => {
+        sound.play();
+        removeEventListener('pointerdown', startOnInteraction);
+        removeEventListener('keydown', startOnInteraction);
+      };
+      addEventListener('pointerdown', startOnInteraction);
+      addEventListener('keydown', startOnInteraction);
+    });
+  </script>
 </body>
 </html>
