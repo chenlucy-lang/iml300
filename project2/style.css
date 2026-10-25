@@ -70,3 +70,36 @@ p, a, span, li, button, input, textarea, label {
   outline: 2px solid #fff;
   outline-offset: 4px;
 }
+
+/* ------------------------------------------------------------------
+   Added for the text sequence (index.html + 1a.js)
+   ------------------------------------------------------------------ */
+
+/* Holds the text above the full-screen canvas that 1a.js draws */
+.lines {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1.5rem;
+  text-align: center;
+  pointer-events: none;       /* clicks go through to the page */
+}
+
+/* Every line sits in the same spot; only one is visible at a time */
+.lines .line {
+  position: absolute;
+  margin: 0;
+  padding: 0 1.5rem;
+  font-size: 1.6rem;                       /* slightly smaller (this page only) */
+  color: #fff;                             /* white text (this page only) */
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);  /* very faint shadow for legibility */
+  opacity: 0;
+  transition: opacity 1.4s ease;   /* fade length: 1a.js reads this */
+}
+
+.lines .line.is-visible {
+  opacity: 1;                 /* 1a.js adds/removes this class */
+}

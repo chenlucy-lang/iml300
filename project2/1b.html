@@ -1,32 +1,28 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Title</title>
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-    }
-
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #fff;
-      font-family: Georgia, "Times New Roman", serif;
-      color: #0a1f5c; /* dark blue */
-      text-align: center;
-    }
-
-    p {
-      font-size: 2rem;
-      padding: 0 1.5rem;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <p>Choice 1b</p>
+  <!-- Each .line is one screen of text, shown in this order.
+       Click to move to the next.
+       A line with data-requires="lit" waits until the flame has fully lit the
+       background (lit.png), then comes in by itself.
+       After the last line, a click goes to data-next. -->
+  <main class="lines" data-next="1c.html">
+    <p class="line">Drifting in from somewhere beyond the walls,</p>
+    <p class="line">as if the whole city is ringing just out of reach.</p>
+
+    <!-- appears after the background is fully lit -->
+    <p class="line" data-requires="lit">Then the warmth.</p>
+    <p class="line">The stone around you holds the day’s light,</p>
+    <p class="line">amber and rust-gold.</p>
+  </main>
+
+  <!-- dark.png and lit.png must be in the same folder as this file -->
+  <script src="1b.js"></script>
 </body>
 </html>
