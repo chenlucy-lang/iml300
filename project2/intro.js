@@ -1,98 +1,89 @@
-/* intro.js: swaps everything.png for everything2.png while the cursor is over the image.
-   It only swaps if everything2.png actually loaded, so a wrong file name or folder
-   can never leave you with a blank screen (check the browser console for a warning).
+// intro.js: a p5 sketch. Blurred text that focuses on hover (ice.mp3 plays while you hover), and "press SPACE to continue".
 
-   It also shows a "press SPACE to continue" prompt at the bottom of the screen after a delay. */
-(() => {
-  const frame = document.querySelector('.intro .frame');
-  const hoverImg = document.querySelector('.everything.hover');
-  if (!frame || !hoverImg) return;
+const TEXT = 'everything is made for you';
+const NEXT_PAGE = '1a.html';
+const DELAY = 2;          // seconds before the SPACE prompt appears (and SPACE starts working)
+const FADE_MS = 600;      // fade to black before leaving
 
-  const src = hoverImg.getAttribute('src');
-  const warn = () =>
-    console.warn(`intro.js: could not load "${src}". Check the file name, capitalization and folder.`);
+let ice;
+let blurAmt = 0.16;       // current blur, in em (0.16 = fully blurred, 0 = sharp)
+let over = false;         // is the mouse over the text?
+let vol = 0;              // current volume of ice.mp3 (fades in and out)
+let leaveStart = null;    // set when SPACE is pressed
 
-  let ready = hoverImg.complete && hoverImg.naturalWidth > 0;
-  if (hoverImg.complete && !ready) warn();
+function setup() {
+  createCanvas(windowWidth, windowHeight).style('display', 'block');
+  textAlign(CENTER, CENTER);
 
-  hoverImg.addEventListener('load', () => { ready = true; });
-  hoverImg.addEventListener('error', () => { ready = false; warn(); });
+  ice = createAudio('ice.mp3');
+  ice.elt.loop = true;    // keeps playing for as long as you hover
+}
 
-  const on = () => { if (ready) frame.classList.add('is-hover'); };
-  const off = () => frame.classList.remove('is-hover');
+function draw() {
+  background('#000013');
 
-  frame.addEventListener('pointerenter', on);
-  frame.addEventListener('pointermove', on);   // also covers an image that finishes loading under the cursor
-  frame.addEventListener('pointerleave', off);
-  frame.addEventListener('pointercancel', off);
-  addEventListener('blur', off);
-})();
+  // Main text: blurred until the mouse is over it
+  const size = width * 0.032;
+  textFont('Times New Roman');
+  textStyle(BOLD);
+  textSize(size);
 
-/* "press SPACE to continue": built and styled here, so intro.html needs nothing for it.
-   Once the prompt is showing, pressing SPACE fades to black and goes to the next page. */
-(() => {
-  const DELAY = 2;                         // seconds to wait before it appears
-  const TEXT = 'press SPACE to continue';
-  const NEXT_PAGE = '1a.html';             // where SPACE takes you
-  const FADE_MS = 600;                     // fade-to-black time before leaving
+  over =
+    abs(mouseX - width / 2) < textWidth(TEXT) / 2 + 2 * size &&
+    abs(mouseY - height / 2) < 1.8 * size;
+  blurAmt = lerp(blurAmt, over ? 0 : 0.16, 0.1);
 
-  const style = document.createElement('style');
-  style.textContent = `
-    .space-prompt {
-      position: fixed;
-      left: 50%;
-      bottom: 12vh;                        /* bigger number = higher up */
-      transform: translateX(-50%);
-      z-index: 10;
-      white-space: nowrap;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: clamp(12px, 1.1vw, 20px);  /* smaller numbers = smaller text */
-      letter-spacing: 0.08em;
-      color: #e8c98f;
-      text-shadow: 0 0 12px rgba(232, 201, 143, 0.45);
-      pointer-events: none;
-      user-select: none;
-      animation: space-prompt-in 1s ease-out both;
-    }
-    @keyframes space-prompt-in {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-    .space-fade {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      background: #000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity ${FADE_MS}ms ease-in;
-    }
-  `;
-  document.head.appendChild(style);
+  // Sound: plays while the mouse is over the text, fades out when it leaves
+  vol = lerp(vol, over ? 1 : 0, 0.15);
+  ice.elt.volume = constrain(vol, 0, 1);
+  if (over && ice.elt.paused) {
+    ice.elt.play().catch(() => console.warn('ice.mp3 is blocked until you click the page once.'));
+  }
+  if (!over && vol < 0.01 && !ice.elt.paused) {
+    ice.elt.pause();
+    ice.elt.currentTime = 0;
+  }
 
-  let ready = false;     // SPACE only works once the prompt is on screen
-  let leaving = false;
+  drawingContext.filter = `blur(${blurAmt * size * pixelDensity()}px)`;
+  drawingContext.shadowColor = '#000a5c';
+  drawingContext.shadowBlur = size * 0.3 * pixelDensity();
+  noStroke();
+  fill('#f9a537');
+  text(TEXT, width / 2, height / 2);
+  drawingContext.filter = 'none';
+  drawingContext.shadowBlur = 0;
 
-  setTimeout(() => {
-    const prompt = document.createElement('div');
-    prompt.className = 'space-prompt';
-    prompt.textContent = TEXT;
-    document.body.appendChild(prompt);
-    ready = true;
-  }, DELAY * 1000);
+  // "press SPACE to continue" fades in after DELAY seconds
+  const a = constrain(millis() / 1000 - DELAY, 0, 1);
+  if (a > 0) {
+    textFont('Georgia');
+    textStyle(NORMAL);
+    textSize(constrain(width * 0.011, 12, 20));
+    fill(232, 201, 143, a * 255);
+    text('press SPACE to continue', width / 2, height * 0.88);
+  }
 
-  addEventListener('keydown', (e) => {
-    if (e.code !== 'Space') return;
-    e.preventDefault();                    // stops the page from scrolling
-    if (!ready || leaving || e.repeat) return;
-    leaving = true;
+  // Fade to black, then go to the next page
+  if (leaveStart !== null) {
+    const k = (millis() - leaveStart) / FADE_MS;
+    fill(0, constrain(k, 0, 1) * 255);
+    rect(0, 0, width, height);
+    if (k >= 1) window.location.href = NEXT_PAGE;
+  }
+}
 
-    const fade = document.createElement('div');
-    fade.className = 'space-fade';
-    document.body.appendChild(fade);
-    fade.getBoundingClientRect();          // makes sure the fade starts from transparent
-    fade.style.opacity = 1;
+function keyPressed() {
+  if (key === ' ') {
+    if (millis() > DELAY * 1000 && leaveStart === null) leaveStart = millis();
+    return false;         // keeps SPACE from scrolling the page
+  }
+}
 
-    setTimeout(() => { location.href = NEXT_PAGE; }, FADE_MS);
-  });
-})();
+function mousePressed() {
+  // Browsers only allow sound after a click. This "unlocks" it silently so hovering works.
+  ice.elt.play().then(() => { if (!over) ice.elt.pause(); }).catch(() => {});
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}

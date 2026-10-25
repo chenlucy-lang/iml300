@@ -3,7 +3,9 @@
    Press and hold, then drag: sand streams out of the cursor along your drag direction,
    curving as you change direction. Release and it settles/fades. Pressing without
    dragging blows it in the last drag direction (right, to start).
-   The canvas ignores the mouse, so buttons still work. */
+   The canvas ignores the mouse, so buttons still work.
+   sand.mp3 plays (looping) while you hold the mouse down on the poster, and fades out on release.
+   pour.mp3 plays (looping) while you are actually dragging, and fades out when you stop moving. */
 (() => {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -19,6 +21,13 @@
   const TURN = 0.35;         // 0-1, how quickly the wind follows your drag direction
   const HAZE = 1;            // 0 = grains only, 1 = default, 2 = thicker veil
   const COLORS = ['232,201,143', '217,178,122', '242,220,174']; // sand tones
+  const AUDIO_SRC = 'sand.mp3';
+  const VOLUME = 0.8;        // 0-1
+  const FADE_IN = 0.15;      // seconds
+  const FADE_OUT = 0.4;      // seconds
+  const POUR_SRC = 'pour.mp3';
+  const POUR_VOLUME = 0.8;   // 0-1
+  const DRAG_HOLD = 150;     // ms you can stay still before the pour sound counts as "stopped dragging"
   // ---------------------
 
   const TAU = Math.PI * 2;
@@ -66,10 +75,61 @@
   let pressed = false;
   let ramp = 0;
   let lastMoveT = 0;
+  let lastDragT = -1e9;        // last time the mouse actually moved while pressed
   let last = 0;
   let spawnAcc = 0;
   let puffAcc = 0;
   let raf = null;
+
+  // ---- Sounds ----
+  // makeSound returns a function: call it with true to fade the sound in, false to fade it out.
+  function makeSound(src, volume, fadeIn, fadeOut) {
+    const el = new Audio(src);
+    el.loop = true;
+    el.preload = 'auto';
+    el.volume = 0;
+    // If the file can't be found or decoded, say exactly which URL failed
+    el.addEventListener('error', () =>
+      console.warn(`sand.js: could not load ${el.src}. Open that address in a tab: if it isn't your audio, the file name or folder is wrong.`));
+
+    let fadeRaf = null;
+    let on = false;
+
+    function fadeTo(target, secs, then) {
+      cancelAnimationFrame(fadeRaf);
+      const from = el.volume;
+      const t0 = performance.now();
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / (secs * 1000));
+        el.volume = from + (target - from) * k;
+        if (k < 1) fadeRaf = requestAnimationFrame(step);
+        else if (then) then();
+      };
+      fadeRaf = requestAnimationFrame(step);
+    }
+
+    return function set(want) {
+      if (want === on) return;
+      on = want;
+      if (want) {
+        if (el.paused) el.currentTime = 0;
+        el.play().catch((err) =>             // a missing file is also reported by the error listener above
+          console.warn(`sand.js: ${src} would not play (${err.name}: ${err.message})`));
+        fadeTo(volume, fadeIn);
+      } else {
+        fadeTo(0, fadeOut, () => { if (!on) el.pause(); });
+      }
+    };
+  }
+
+  const setSand = makeSound(AUDIO_SRC, VOLUME, FADE_IN, FADE_OUT);
+  const setPour = makeSound(POUR_SRC, POUR_VOLUME, 0.1, 0.25);
+
+  function updateSound() {
+    const onPoster = pressed && isInside();  // same rule as the sand itself
+    setSand(onPoster);                                                       // holding the mouse down
+    setPour(onPoster && performance.now() - lastDragT < DRAG_HOLD);          // actually dragging
+  }
 
   function emitGrain() {
     if (grains.length >= MAX_GRAINS) return;
@@ -109,6 +169,7 @@
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
 
+    updateSound();                                 // lets the pour sound stop when you hold still
     ramp = pressed ? Math.min(1, ramp + dt / 0.15) : 0;
     drag *= Math.exp(-dt * 3);                     // eases off when you stop moving
 
@@ -175,20 +236,23 @@
     raf = requestAnimationFrame(frame);
   }
 
-  addEventListener('pointerdown', (e) => {
+  // Mouse pressed: start the sand and the sound
+  function mousePressed(e) {
     const m = local(e);
     pos.x = m.x;
     pos.y = m.y;
     lastMoveT = performance.now();
     pressed = true;
+    updateSound();
     if (isInside()) for (let i = 0; i < 150; i++) emitGrain();  // instant first puff
     if (raf === null) {
       last = performance.now();
       raf = requestAnimationFrame(frame);
     }
-  });
+  }
 
-  addEventListener('pointermove', (e) => {
+  // Mouse moved: steer the wind while pressed, and stop/resume the sound at the poster edge
+  function mouseMoved(e) {
     const now = performance.now();
     const m = local(e);
     if (pressed) {
@@ -206,15 +270,24 @@
         const secs = Math.max(now - lastMoveT, 1) / 1000;
         const target = Math.min(1, dist / secs / 1500);
         drag += (target - drag) * 0.3;
+        lastDragT = now;                     // you are dragging right now
       }
     }
     pos.x = m.x;
     pos.y = m.y;
     lastMoveT = now;
-  });
+    updateSound();                           // stops if you drag off the poster, resumes if you return
+  }
 
-  const release = () => { pressed = false; };
-  addEventListener('pointerup', release);
-  addEventListener('pointercancel', release);
-  addEventListener('blur', release);
+  // Mouse released: stop the sand and fade out the sound
+  function mouseReleased() {
+    pressed = false;
+    updateSound();
+  }
+
+  addEventListener('pointerdown', mousePressed);
+  addEventListener('pointermove', mouseMoved);
+  addEventListener('pointerup', mouseReleased);
+  addEventListener('pointercancel', mouseReleased);
+  addEventListener('blur', mouseReleased);
 })();
