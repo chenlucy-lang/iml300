@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Title</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Each .line is one screen of text, shown in this order.
+       Click to move to the next. After the last one, the Yes / No buttons below appear. -->
+  <main class="lines">
+    <p class="line">Do you believe this city truly exists?</p>
+
+    <!-- shown after "No" is clicked, before going to 3a.html -->
+    <p class="reply" id="reply-no">Then follow me.</p>
+  </main>
+
+  <!-- Appear after the line above is clicked past.
+       Yes goes straight to 2a.html. No first shows the reply "Then follow me."
+       (data-reply), and the next click goes to 3a.html. -->
+  <div class="choices">
+    <button class="choice" type="button" data-next="2a.html">Yes</button>
+    <button class="choice" type="button" data-next="3a.html" data-reply="reply-no">No</button>
+  </div>
+
+  <!-- cloak.png and om.mp3 must be in the same folder as this file -->
+  <script src="1d.js"></script>
+</body>
+</html>

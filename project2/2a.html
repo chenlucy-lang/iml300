@@ -1,32 +1,20 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Title</title>
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-    }
-
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #fff;
-      font-family: Georgia, "Times New Roman", serif;
-      color: #0a1f5c; /* dark blue */
-      text-align: center;
-    }
-
-    p {
-      font-size: 2rem;
-      padding: 0 1.5rem;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <p>Choice 2</p>
+  <!-- Each .line is one screen of text, shown in this order.
+       Click to move to the next. After the last one, the text and music fade
+       out and it goes to data-next (2aa.html). -->
+  <main class="lines" data-next="2aa.html">
+    <p class="line">“Of course,” you say, and the stranger grins as he quietly leaves.</p>
+  </main>
+
+  <!-- ofc.png and walk.mp3 must be in the same folder as this file -->
+  <script src="2a.js"></script>
 </body>
 </html>

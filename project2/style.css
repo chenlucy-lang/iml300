@@ -103,3 +103,52 @@ p, a, span, li, button, input, textarea, label {
 .lines .line.is-visible {
   opacity: 1;                 /* 1a.js adds/removes this class */
 }
+
+/* ------------------------------------------------------------------
+   Yes / No buttons (1d.html + 1d.js)
+   ------------------------------------------------------------------ */
+
+/* Sits where the lines do; invisible and unclickable until 1d.js fades it in */
+.choices {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rem;                /* space between Yes and No */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.4s ease;
+}
+
+.choices.is-visible {
+  opacity: 1;
+  pointer-events: auto;       /* 1d.js adds this class */
+}
+
+/* Same look as the text lines: white Georgia with a faint shadow */
+.choices .choice {
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 0.4rem 1rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.6rem;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: color 0.35s ease, text-shadow 0.35s ease;
+}
+
+/* Hover (and keyboard focus): turns yellow and glows */
+.choices .choice:hover,
+.choices .choice:focus-visible {
+  color: #ffd84a;
+  text-shadow:
+    0 0 6px rgba(255, 216, 74, 0.95),
+    0 0 18px rgba(255, 200, 40, 0.8),
+    0 0 38px rgba(255, 170, 0, 0.6);
+  outline: none;
+}

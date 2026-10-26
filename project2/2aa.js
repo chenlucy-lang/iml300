@@ -1,0 +1,213 @@
+/**
+ * 2aa.js — full-screen fire.png that moves up/down/left/right with the mouse
+ * (same movement as the other pages), with carn.mp3 playing.
+ *
+ * Usage:  <script src="2aa.js"></script>
+ * (fire.png and carn.mp3 must sit next to your HTML file, or change the paths below.)
+ */
+(() => {
+  const IMAGE_SRC = 'fire.png';
+
+  // ---- tweakables ---------------------------------------------------------
+  const DISTANCE = 0.012;  // max travel in each direction (fraction of the image)
+  const EASE = 25;         // how quickly it catches up to the mouse (higher = snappier)
+  const INVERT = false;    // false: image follows the mouse, true: moves opposite (parallax)
+  const ZOOM = 1.03;       // slight zoom so edges never show while moving (keep > 1 + DISTANCE*2)
+  // -------------------------------------------------------------------------
+
+  // Plain 2D canvas (not WebGL): works for any image size and also when the page
+  // is opened straight from disk, where WebGL would refuse to use the image.
+  const canvas = document.createElement('canvas');
+  Object.assign(canvas.style, {
+    position: 'fixed', inset: '0', width: '100%', height: '100%',
+    zIndex: '0', pointerEvents: 'none', display: 'block',
+  });
+  document.body.prepend(canvas);
+
+  const ctx = canvas.getContext('2d');
+  const MAX_SIDE = 4096;            // very large images are shrunk once, so drawing stays smooth
+
+  let source = null;                // what we draw from (the image, or a shrunk copy of it)
+  let ready = false;
+
+  function layout() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(window.innerWidth * dpr);
+    canvas.height = Math.round(window.innerHeight * dpr);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+  }
+
+  const img = new Image();
+  img.onload = () => {
+    const w = img.naturalWidth, h = img.naturalHeight;
+    source = img;
+    if (Math.max(w, h) > MAX_SIDE) {
+      const k = MAX_SIDE / Math.max(w, h);
+      const c = document.createElement('canvas');
+      c.width = Math.round(w * k);
+      c.height = Math.round(h * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      source = c;
+    }
+    ready = true;
+    layout();
+  };
+  img.onerror = () => console.error(
+    '2aa.js: could not load image "' + IMAGE_SRC + '" (looked for ' + img.src + '). ' +
+    'Check the file name, capitalisation and that it is in the same folder as 2aa.html.');
+  img.src = IMAGE_SRC;
+
+  window.addEventListener('resize', layout);
+  layout();
+
+  // mouse position normalised to -1..1 (0,0 = screen centre)
+  const target = { x: 0, y: 0 };
+  const cur = { x: 0, y: 0 };
+
+  function setTarget(clientX, clientY) {
+    target.x = (clientX / window.innerWidth) * 2 - 1;
+    target.y = (clientY / window.innerHeight) * 2 - 1;
+  }
+  window.addEventListener('mousemove', e => setTarget(e.clientX, e.clientY));
+  window.addEventListener('touchmove', e => {
+    const t = e.touches[0]; if (t) setTarget(t.clientX, t.clientY);
+  }, { passive: true });
+
+  function draw(offX, offY) {
+    const iw = source.width, ih = source.height;
+    const imgAspect = iw / ih;
+    const screenAspect = canvas.width / canvas.height;
+
+    // fraction of the image visible with "object-fit: cover", then zoomed in
+    const fx = (screenAspect > imgAspect ? 1 : screenAspect / imgAspect) / ZOOM;
+    const fy = (screenAspect > imgAspect ? imgAspect / screenAspect : 1) / ZOOM;
+
+    // source rectangle in image pixels, centred and shifted by the mouse offset
+    const sw = fx * iw, sh = fy * ih;
+    const sx = (0.5 + offX) * iw - sw / 2;
+    const sy = (0.5 + offY) * ih - sh / 2;
+
+    ctx.fillStyle = '#000';                       // shows through any transparent parts of the png
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(source, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  }
+
+  // ---- audio: carn.mp3, starts on the first mouse movement ----------------
+  const AUDIO_SRC = 'carn.mp3';
+  const AUDIO_LOOP = true;          // keep playing until the page changes
+  const AUDIO_FADE_IN_MS = 1400;    // gentle fade-in when it starts
+  const audio = new Audio(AUDIO_SRC);
+  audio.loop = AUDIO_LOOP;
+  audio.preload = 'auto';
+  audio.volume = 0;                 // starts silent, then fades up
+
+  let audioStarted = false;
+  let audioPending = false;
+  let audioFading = false;
+
+  function fadeInAudio(ms) {
+    const t0 = performance.now();
+    const timer = setInterval(() => {
+      if (audioFading) { clearInterval(timer); return; }
+      const p = Math.min(1, (performance.now() - t0) / ms);
+      audio.volume = p;
+      if (p >= 1) clearInterval(timer);
+    }, 30);
+  }
+
+  function startAudio() {
+    if (audioStarted || audioPending || audioFading) return;
+    audioPending = true;
+    const p = audio.play();
+    if (p && p.then) {
+      p.then(() => { audioStarted = true; audioPending = false; fadeInAudio(AUDIO_FADE_IN_MS); })
+       // Browsers can refuse sound before a click/tap/key press; if so,
+       // just try again on the next movement or click.
+       .catch(() => { audioPending = false; });
+    } else {
+      audioStarted = true; audioPending = false; fadeInAudio(AUDIO_FADE_IN_MS);
+    }
+  }
+
+  window.addEventListener('mousemove', startAudio);
+  window.addEventListener('touchmove', startAudio, { passive: true });
+  window.addEventListener('click', startAudio);   // click always counts as a permission gesture
+  startAudio();                                   // try straight away (works if the browser allows it)
+
+  // Smoothly lowers the volume to silence over `ms`, then stops the track.
+  function fadeOutAudio(ms) {
+    audioFading = true;                    // stops later movement from restarting it
+    const startVol = audio.volume;
+    const t0 = performance.now();
+    const timer = setInterval(() => {
+      const p = Math.min(1, (performance.now() - t0) / ms);
+      audio.volume = startVol * (1 - p);
+      if (p >= 1) { clearInterval(timer); audio.pause(); }
+    }, 30);
+  }
+
+  let lastT = performance.now();
+  (function frame(now) {
+    requestAnimationFrame(frame);
+    if (!ready) return;
+    now = now || performance.now();
+    const dt = Math.min(0.05, (now - lastT) / 1000);
+    lastT = now;
+
+    // smooth, frame-rate independent easing toward the mouse
+    const k = 1 - Math.exp(-EASE * dt);
+    cur.x += (target.x - cur.x) * k;
+    cur.y += (target.y - cur.y) * k;
+
+    // sampling the image opposite to the mouse makes the image follow it
+    const dir = INVERT ? 1 : -1;
+    draw(dir * cur.x * DISTANCE, dir * cur.y * DISTANCE);
+  })(performance.now());
+
+  // ---- text sequence (reactions only; the words live in 2aa.html) ----------
+  // Every element with class "line" is one screen of text, in page order.
+  // Click / tap: fade the current line out, fade the next one in.
+  // Click after the last line: if 2aa.html has a data-next, the text and the music
+  // fade out and it goes to that page. With no data-next, the last line just stays on screen.
+  // With no lines at all, this does nothing.
+  const lines = Array.from(document.querySelectorAll('.line'));
+  const holder = document.querySelector('[data-next]');
+  const NEXT_PAGE = holder && holder.dataset.next;   // none yet: set data-next in 2aa.html
+
+  if (lines.length) {
+    // fade length comes from the CSS transition, so it's set in one place
+    const fadeMs = (parseFloat(getComputedStyle(lines[0]).transitionDuration) || 1.4) * 1000;
+    let index = 0;
+    let busy = true;
+
+    function show(i) {
+      busy = true;
+      lines[i].classList.add('is-visible');
+      setTimeout(() => (busy = false), fadeMs);
+    }
+
+    function advance() {
+      if (busy) return;                // ignore clicks mid-fade
+      const isLast = index === lines.length - 1;
+      if (isLast && !NEXT_PAGE) return;   // no page after this one yet
+      busy = true;
+      lines[index].classList.remove('is-visible');
+      if (isLast) fadeOutAudio(fadeMs);   // music fades with the last line
+      setTimeout(() => {
+        index++;
+        if (index < lines.length) show(index);
+        else {
+          // remember where the music is so the next page can pick it up
+          try {
+            sessionStorage.setItem('carnAudio', JSON.stringify({ t: audio.currentTime, playing: audioStarted }));
+          } catch (e) {}
+          window.location.href = NEXT_PAGE;
+        }
+      }, fadeMs);
+    }
+
+    window.addEventListener('click', advance);
+    setTimeout(() => show(0), 400);
+  }
+})();
