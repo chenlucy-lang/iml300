@@ -1,36 +1,17 @@
-/**
- * 1a.js — full-screen bell.png that moves with the mouse.
- *
- * Includes:
- * - Smooth mouse-follow background animation
- * - 1amix.mp3 playing (fades in, loops, fades out after the last line)
- * - Text appearing line by line
- * - Click to advance text
- * - Fade-in and fade-out transitions
- * - Navigation to the next HTML page
- *
- * Usage: <script src="1a.js"></script>
- *
- * bell.png and 1amix.mp3 must be in the same folder as your HTML file.
- */
 
 (() => {
 
-  // ---------------- IMAGE ----------------
 
   const IMAGE_SRC = 'bell.png';
 
 
-  // ---------------- SETTINGS ----------------
-
-  const DISTANCE = 0.012;
+  //changeable settings
+const DISTANCE = 0.012;
   const EASE = 25;
   const INVERT = false;
   const ZOOM = 1.03;
 
-
-  // ---------------- CANVAS ----------------
-
+//makes the canvas to draw on
   const canvas = document.createElement('canvas');
 
   Object.assign(canvas.style, {
@@ -45,11 +26,8 @@
 
   document.body.prepend(canvas);
 
-
-  // ---------------- AUDIO ----------------
-  // 1amix.mp3 starts on the first mouse movement, tap or click (browsers often
-  // block sound until the person interacts with the page).
-  // Set up before WebGL so the music still plays even if WebGL isn't available.
+  //1amix.mp3 starts on the first mouse movement, tap or click (since Q said it's better to trigger an audio after interactivity)
+  //Set up before WebGL so the music still plays even if WebGL isn't available.
 
   const AUDIO_SRC = '1amix.mp3';
   const AUDIO_LOOP = true;          // keep playing until the page changes
@@ -60,7 +38,7 @@
 
   audio.loop = AUDIO_LOOP;
   audio.preload = 'auto';
-  audio.volume = 0;                 // starts silent, then fades up
+  audio.volume = 0;                 //starts silent, then fades up
 
   audio.addEventListener('error', () => {
     console.warn('1a.js: could not load ' + AUDIO_SRC);

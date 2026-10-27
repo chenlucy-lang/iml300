@@ -1,19 +1,13 @@
-/**
- * 2a.js — full-screen ofc.png that moves up/down/left/right with the mouse
- * (same movement as the 1x pages), with walk.mp3 playing.
- *
- * Usage:  <script src="2a.js"></script>
- * (ofc.png and walk.mp3 must sit next to your HTML file, or change the paths below.)
- */
+
 (() => {
   const IMAGE_SRC = 'ofc.png';
 
-  // ---- tweakables ---------------------------------------------------------
+  //tweakables
   const DISTANCE = 0.012;  // max travel in each direction (fraction of the image)
   const EASE = 25;         // how quickly it catches up to the mouse (higher = snappier)
   const INVERT = false;    // false: image follows the mouse, true: moves opposite (parallax)
   const ZOOM = 1.03;       // slight zoom so edges never show while moving (keep > 1 + DISTANCE*2)
-  // -------------------------------------------------------------------------
+
 
   // Plain 2D canvas (not WebGL): works for any image size and also when the page
   // is opened straight from disk, where WebGL would refuse to use the image.

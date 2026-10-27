@@ -1,568 +1,259 @@
-/**
- * end1.js
- *
- * Background: away.png
- * Audio: pour.mp3
- *
- * The image follows the mouse with smooth easing (same as 3c.js, but with no
- * particle reaction in the middle).
- *
- * Text: the .line elements in end1.html fade in one at a time (click to move on).
- * A line with data-image="other.png" swaps the background to that image (a slow
- * crossfade) when it is clicked past. After the last line, Yes / No buttons
- * (.choices in end1.html) appear if the page has them.
- *
- * Usage:
- * <script src="end1.js"></script>
- * (away.png and pour.mp3 must be in the same folder as end1.html.)
- *
- * Patched: the whole script now waits for the page to finish loading (so it
- * works even if the <script> tag is in <head>), and lines / buttons get their
- * opacity set directly, so they show even if style.css has no .is-visible rule.
- */
 
 (() => {
 
-  const start = () => {
-
-  // ---------------- IMAGE ----------------
+  //Changeable settings (I have this basically at the top of every js file)
 
   const IMAGE_SRC = 'away.png';
-
-  // Mouse-follow animation
-  const DISTANCE = 0.012;
-  const EASE = 25;
-  const INVERT = false;
-  const ZOOM = 1.03;
-
-  // Background swap (only used by a line with data-image)
-  const IMAGE_FADE_S = 1.4;
-
-
-
-  // ---------------- AUDIO SETTINGS ----------------
+  const DISTANCE = 0.012;      // how far the picture moves (fraction of the image)
+  const EASE = 25;             // how quickly it catches the mouse (higher = snappier)
+  const INVERT = false;        // true: moves opposite the mouse
+  const ZOOM = 1.03;           // slight zoom so edges never show
+  const IMAGE_FADE_S = 1.4;    // background swap (only used by a line with data-image)
 
   const AUDIO_SRC = 'pour.mp3';
-  const AUDIO_LOOP = false;         // true: repeat until the page changes; false: play once
-  const AUDIO_FADE_IN_MS = 1400;    // gentle fade-in when it starts
-  const AUDIO_VOLUME = 1;           // 0 to 1
+  const AUDIO_LOOP = false;        // true: repeat until the page changes; false: play once
+  const AUDIO_FADE_IN_MS = 1400;
+  const AUDIO_VOLUME = 1;          //0 to 1
 
 
+  // run once the page's elements exist, so the <script> tag can go anywhere
+    // If the page is still loading, wait for it to finish, then run init().
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 
-  // ---------------- PAGE STACKING FIX ----------------
-  // Keeps the text above the canvas. (style.css already makes .lines fixed and
-  // centred, so only z-index is set here. Setting position: relative here would
-  // pull the text out of the centre and up to the top of the page.)
+    // init() holds all the real work. It only runs once the page is ready.
+  function init() {
 
-  const styleFix = document.createElement('style');
-  styleFix.textContent = `
-    .lines {
-      z-index: 1;
+    //keeps the text above the canvas (style.css already centres .lines)
+    //AI assisted-->I had trouble with the text showing up throughout the coding process
+    document.head.insertAdjacentHTML('beforeend', '<style>.lines { z-index: 1; }</style>');
+
+
+    //background-
+
+    const canvas = document.createElement('canvas');
+        // Style the canvas with code instead of CSS:
+    Object.assign(canvas.style, {
+            // fixed = stays in place; inset 0 = stretch to every edge; 100% = full size 
+      position: 'fixed', inset: '0', width: '100%', height: '100%',
+      zIndex: '0',            // not -1: that would sit behind <body>'s black background
+            // pointerEvents none = clicks pass through to the page; display block = no stray gap.
+      pointerEvents: 'none', display: 'block'
+    });
+        // Put the canvas at the very start of <body> so it sits behind the text
+    document.body.prepend(canvas);
+
+    const ctx = canvas.getContext('2d');
+
+    function layout() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            // Make the canvas as wide as the window, in real pixels.
+      canvas.width = Math.round(window.innerWidth * dpr);
+            // Make the canvas as tall as the window, in real pixels.
+      canvas.height = Math.round(window.innerHeight * dpr);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
     }
-  `;
-  document.head.appendChild(styleFix);
-
-
-  // ---------------- CANVAS ----------------
-
-  const canvas = document.createElement('canvas');
-
-  Object.assign(canvas.style, {
-    position: 'fixed',
-    inset: '0',
-    width: '100%',
-    height: '100%',
-    // 0, not -1: style.css gives <body> a black background, and a canvas at -1
-    // sits BEHIND that background, so the image would never be visible.
-    zIndex: '0',
-    pointerEvents: 'none',
-    display: 'block'
-  });
-
-  document.body.prepend(canvas);
-
-  const ctx = canvas.getContext('2d');
-
-  let source = null;            // the picture currently shown
-  let incoming = null;          // the next picture, while it fades in
-  let mix = 0;                  // 0..1 progress of that fade
-  let changed = false;          // the swap only happens once
-  let ready = false;
-  let dpr = 1;
-
-
-
-  // ---------------- AUDIO ----------------
-  // pour.mp3 starts on the first mouse movement, tap or click (browsers often
-  // block sound until the person interacts with the page).
-
-  const audio = new Audio(AUDIO_SRC);
-
-  audio.loop = AUDIO_LOOP;
-  audio.preload = 'auto';
-  audio.volume = 0;                 // starts silent, then fades up
-
-  audio.addEventListener('error', () => {
-    console.warn('end1.js: Could not load ' + AUDIO_SRC);
-  });
-
-  let audioStarted = false;
-  let audioPending = false;
-  let audioFading = false;
-
-
-  function fadeInAudio(ms) {
-
-    const t0 = performance.now();
-
-    const timer = setInterval(() => {
-
-      if (audioFading) {
-        clearInterval(timer);
-        return;
-      }
-
-      const p = Math.min(1, (performance.now() - t0) / ms);
-
-      audio.volume = p * AUDIO_VOLUME;
-
-      if (p >= 1) clearInterval(timer);
-
-    }, 30);
-
-  }
-
-
-  function startAudio() {
-
-    if (audioStarted || audioPending || audioFading) return;
-
-    audioPending = true;
-
-    const p = audio.play();
-
-    if (p && p.then) {
-
-      p.then(() => {
-
-        audioStarted = true;
-        audioPending = false;
-
-        fadeInAudio(AUDIO_FADE_IN_MS);
-
-      }).catch(() => {
-
-        // Browser refused sound before a click/tap/key press.
-        // Try again on the next movement or click.
-        audioPending = false;
-
-      });
-
-    } else {
-
-      audioStarted = true;
-      audioPending = false;
-
-      fadeInAudio(AUDIO_FADE_IN_MS);
-
-    }
-
-  }
-
-
-  // Smoothly lowers the volume to silence over `ms`, then stops the track.
-  function fadeOutAudio(ms) {
-
-    audioFading = true;             // stops later movement from restarting it
-
-    const startVol = audio.volume;
-    const t0 = performance.now();
-
-    const timer = setInterval(() => {
-
-      const p = Math.min(1, (performance.now() - t0) / ms);
-
-      audio.volume = startVol * (1 - p);
-
-      if (p >= 1) {
-        clearInterval(timer);
-        audio.pause();
-      }
-
-    }, 30);
-
-  }
-
-
-  window.addEventListener('mousemove', startAudio);
-  window.addEventListener('touchstart', startAudio, { passive: true });
-  window.addEventListener('touchmove', startAudio, { passive: true });
-  window.addEventListener('click', startAudio);   // a click always counts as permission
-
-  startAudio();                                   // try straight away (works if the browser allows it)
-
-
-
-  // ---------------- RESIZE ----------------
-
-  function layout() {
-
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-    canvas.width = Math.round(window.innerWidth * dpr);
-    canvas.height = Math.round(window.innerHeight * dpr);
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
-  }
-
-
-  // ---------------- LOAD IMAGE ----------------
-
-  const img = new Image();
-
-  img.onload = () => {
-
-    source = img;
-    ready = true;
-
     layout();
+    window.addEventListener('resize', layout);
 
-  };
-
-  img.onerror = () => {
-    console.error('end1.js: Could not load ' + IMAGE_SRC);
-  };
-
-  img.src = IMAGE_SRC;
-
-
-  window.addEventListener('resize', layout);
-
-
-  // ---------------- MOUSE POSITION ----------------
-
-  const target = { x: 0, y: 0 };
-  const cur = { x: 0, y: 0 };
-
-  function setTarget(clientX, clientY) {
-
-    target.x = (clientX / window.innerWidth) * 2 - 1;
-    target.y = (clientY / window.innerHeight) * 2 - 1;
-
-  }
-
-  window.addEventListener('mousemove', e => {
-    setTarget(e.clientX, e.clientY);
-  });
-
-  window.addEventListener('touchstart', e => {
-
-    const t = e.touches[0];
-
-    if (t) {
-      setTarget(t.clientX, t.clientY);
+    function loadImage(src, done) {
+      const im = new Image();
+      im.onload = () => done(im);
+      im.onerror = () => console.error('end1.js: Could not load ' + src);
+      im.src = src;
     }
 
-  }, { passive: true });
+    let source = null;       // the picture currently shown
+    let incoming = null;     // the next picture, while it fades in
+    let mix = 0;             // 0..1 progress of that fade
+    let changed = false;     // the swap only happens once
 
-  window.addEventListener('touchmove', e => {
+    loadImage(IMAGE_SRC, im => { source = im; });
 
-    const t = e.touches[0];
-
-    if (t) {
-      setTarget(t.clientX, t.clientY);
+    function changeImage(src) {
+      if (changed) return;
+      changed = true;
+      loadImage(src, im => { incoming = im; mix = 0; });
     }
 
-  }, { passive: true });
+    // draws the part of the picture that is visible ("cover" fit, zoomed, shifted by the mouse)
+    function draw(src, offX, offY, alpha) {
+      const cw = canvas.width, ch = canvas.height;
+      const scale = Math.max(cw / src.width, ch / src.height) * ZOOM;
+      const sw = cw / scale, sh = ch / scale;
 
-  // ---------------- DRAW IMAGE ----------------
-
-  function drawSource(src, offX, offY, alpha) {
-
-    const iw = src.width;
-    const ih = src.height;
-
-    const imgAspect = iw / ih;
-    const screenAspect = canvas.width / canvas.height;
-
-    const fx = (
-      screenAspect > imgAspect
-        ? 1
-        : screenAspect / imgAspect
-    ) / ZOOM;
-
-    const fy = (
-      screenAspect > imgAspect
-        ? imgAspect / screenAspect
-        : 1
-    ) / ZOOM;
-
-    const sw = fx * iw;
-    const sh = fy * ih;
-
-    const sx = (0.5 + offX) * iw - sw / 2;
-    const sy = (0.5 + offY) * ih - sh / 2;
-
-    ctx.globalAlpha = alpha;
-
-    ctx.drawImage(
-      src,
-      sx,
-      sy,
-      sw,
-      sh,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-    ctx.globalAlpha = 1;
-
-  }
-
-  function drawImage(offX, offY) {
-
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    drawSource(source, offX, offY, 1);
-
-    // while swapping, the new picture fades in on top (eased)
-    if (incoming && mix > 0) {
-      drawSource(incoming, offX, offY, mix * mix * (3 - 2 * mix));
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(src,
+        (0.5 + offX) * src.width - sw / 2,
+        (0.5 + offY) * src.height - sh / 2,
+        sw, sh, 0, 0, cw, ch);
+      ctx.globalAlpha = 1;
     }
 
-  }
+
+    //mouse
+
+    const target = { x: 0, y: 0 };   // -1..1, (0,0) = screen centre
+    const cur = { x: 0, y: 0 };      //eased towards the target
+
+    function follow(e) {
+      target.x = (e.clientX / window.innerWidth) * 2 - 1;
+      target.y = (e.clientY / window.innerHeight) * 2 - 1;
+    }
+    window.addEventListener('pointermove', follow);   // mouse, touch and pen
+    window.addEventListener('pointerdown', follow);
 
 
-  // ---------------- SWAP THE BACKGROUND ----------------
+    //animation now
 
-  function changeImage(src) {
+    let last = performance.now();
 
-    if (changed) return;
-    changed = true;
+    (function frame(now) {
+      requestAnimationFrame(frame);
+      if (!source) return;
 
-    const im = new Image();
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
 
-    im.onload = () => {
-      incoming = im;        // the frame loop fades it in
-      mix = 0;
-    };
+      const k = 1 - Math.exp(-EASE * dt);
+      cur.x += (target.x - cur.x) * k;
+      cur.y += (target.y - cur.y) * k;
 
-    im.onerror = () => {
-      console.error('end1.js: Could not load ' + src);
-    };
+      const dir = INVERT ? 1 : -1;
+      const offX = dir * cur.x * DISTANCE;
+      const offY = dir * cur.y * DISTANCE;
 
-    im.src = src;
-
-  }
-
-
-  // ---------------- ANIMATION LOOP ----------------
-
-  let lastT = performance.now();
-
-  function frame(now) {
-
-    requestAnimationFrame(frame);
-
-    if (!ready) return;
-
-    const dt = Math.min(
-      0.05,
-      (now - lastT) / 1000
-    );
-
-    lastT = now;
-
-
-    // Smooth mouse-follow movement
-    const k = 1 - Math.exp(-EASE * dt);
-
-    cur.x += (target.x - cur.x) * k;
-    cur.y += (target.y - cur.y) * k;
-
-
-    // Calculate image movement
-    const dir = INVERT ? 1 : -1;
-
-    const offX = dir * cur.x * DISTANCE;
-    const offY = dir * cur.y * DISTANCE;
-
-
-    // Advance the background swap
-    if (incoming) {
-
-      mix = Math.min(1, mix + dt / IMAGE_FADE_S);
-
-      if (mix >= 1) {
-        source = incoming;
-        incoming = null;
-        mix = 0;
+      if (incoming) {                                  // background swap in progress
+        mix = Math.min(1, mix + dt / IMAGE_FADE_S);
+        if (mix >= 1) { source = incoming; incoming = null; mix = 0; }
       }
 
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      draw(source, offX, offY, 1);
+      if (incoming) draw(incoming, offX, offY, mix * mix * (3 - 2 * mix));
+    })(performance.now());
+
+
+    //audio
+    //to ensure that the audio isn't buggy, i made sure to make it so that it only starts playing when a person interacts with it
+
+    const audio = new Audio(AUDIO_SRC);
+    audio.loop = AUDIO_LOOP;
+    audio.preload = 'auto';
+    audio.volume = 0;                                  // starts silent, then fades up
+    audio.addEventListener('error', () => console.warn('end1.js: Could not load ' + AUDIO_SRC));
+
+    let audioStarted = false;
+    let leaving = false;
+    let fadeTimer = null;
+
+    // fades the volume to `to` over `ms`; fading to 0 also stops the track
+    function fadeAudio(to, ms) {
+      clearInterval(fadeTimer);
+      const from = audio.volume;
+      const t0 = performance.now();
+      fadeTimer = setInterval(() => {
+        const p = Math.min(1, (performance.now() - t0) / ms);
+        audio.volume = from + (to - from) * p;
+        if (p >= 1) {
+          clearInterval(fadeTimer);
+          if (to === 0) audio.pause();
+        }
+      }, 30);
     }
 
+    function startAudio() {
+      if (audioStarted || leaving) return;
+      audioStarted = true;                             // blocks repeat calls while play() is pending
+      audio.play()
+        .then(() => { if (!leaving) fadeAudio(AUDIO_VOLUME, AUDIO_FADE_IN_MS); })
+        .catch(() => { audioStarted = false; });       // refused: try again on the next move / click
+    }
 
-    // Draw background image
-    drawImage(offX, offY);
-
-  }
+    ['pointermove', 'pointerdown', 'click'].forEach(ev => window.addEventListener(ev, startAudio));
+    startAudio();                                      // try straight away (works if the browser allows it)
 
 
-  requestAnimationFrame(frame);
+    //text sequence
 
+    const lines = Array.from(document.querySelectorAll('.line'));
+    const choices = document.querySelector('.choices');
+    const holder = document.querySelector('.lines[data-next]');
+    const NEXT_PAGE = holder && holder.dataset.next;
 
-  // ---------------- TEXT SEQUENCE ----------------
-  // Every element with class "line" is one screen of text, in page order.
-  // The first one fades in by itself; a click fades it out and brings in the next.
-  //
-  // A line with data-image="other.png" swaps the background to that picture when
-  // it is clicked past.
-  //
-  // After the last line, a click fades it out and brings in the .choices buttons
-  // (Yes / No). A button with a data-next fades the screen out and goes to that page;
-  // a button without one does nothing yet.
-  // With no .choices, a data-next on the <main class="lines"> tag is used instead,
-  // and with neither, the last line just stays.
-  //
-  // When the page is left (a button or data-next), pour.mp3 fades out with it.
+    if (!lines.length) return;
 
-  const lines = Array.from(document.querySelectorAll('.line'));
-  const holder = document.querySelector('.lines[data-next]');
-  const NEXT_PAGE = holder && holder.dataset.next;
-  const choices = document.querySelector('.choices');
+    // fade length comes from the CSS transition (1.4s if there isn't one)
+    const fadeMs = (parseFloat(getComputedStyle(lines[0]).transitionDuration) || 1.4) * 1000;
 
-  console.log('end1.js: found ' + lines.length + ' .line element(s)');
-
-  if (!lines.length) {
-    console.warn('end1.js: no elements with class "line" found, so there is no text to show.');
-  }
-
-  if (lines.length) {
-
-    // Fade length comes from the CSS transition, so it's set in one place.
-    // If the CSS has no transition (0s), 1.4s is used.
-    const fadeMs = (
-      parseFloat(getComputedStyle(lines[0]).transitionDuration) || 1.4
-    ) * 1000;
-
-    // Shows or hides an element. Sets the class AND the opacity directly, so it
-    // works even if style.css has no .is-visible rule.
+    // shows or hides an element; sets the class AND the style directly, so it works
+    // even if style.css has no .is-visible rule
     function setVisible(el, on) {
-
       el.classList.toggle('is-visible', on);
       el.style.transition = 'opacity ' + (fadeMs / 1000) + 's ease';
       el.style.opacity = on ? '1' : '0';
-
+      if (el === choices) el.style.pointerEvents = on ? 'auto' : 'none';
     }
 
     let index = 0;
     let busy = true;
-    let leaving = false;
 
     // load any swap picture ahead of time so the change is instant when clicked
-    lines.forEach(l => {
-      if (l.dataset.image) new Image().src = l.dataset.image;
-    });
+    lines.forEach(l => { if (l.dataset.image) new Image().src = l.dataset.image; });
 
     function show(i) {
-
       busy = true;
       setVisible(lines[i], true);
-
-      setTimeout(() => {
-        busy = false;
-      }, fadeMs);
-
+      setTimeout(() => { busy = false; }, fadeMs);
     }
 
+    // sound and screen fade out together, then the page changes
     function goTo(page) {
-
       if (leaving) return;
       leaving = true;
-
-      fadeOutAudio(fadeMs);                              // sound fades as the screen does
-
-      setTimeout(() => {
-        window.location.href = page;
-      }, fadeMs);
-
+      fadeAudio(0, fadeMs);
+      setTimeout(() => { window.location.href = page; }, fadeMs);
     }
 
     function advance() {
-
-      if (busy) return;                                  // ignore clicks mid-fade
+      if (busy) return;                                // ignore clicks mid-fade
 
       const isLast = index === lines.length - 1;
+      if (isLast && !choices && !NEXT_PAGE) return;    // nothing after the last line
 
-      if (isLast && !choices && !NEXT_PAGE) return;      // nothing after the last line
-
-      busy = true;
+      busy = true;                                     // stays busy after the last line
       setVisible(lines[index], false);
 
-      // this line swaps the background as it goes out
       if (lines[index].dataset.image) changeImage(lines[index].dataset.image);
 
-      if (isLast && choices) {                           // last line gone -> Yes / No appear
-        setTimeout(() => {
-          choices.classList.add('is-visible');
-          choices.style.transition = 'opacity ' + (fadeMs / 1000) + 's ease';
-          choices.style.opacity = '1';
-          choices.style.pointerEvents = 'auto';
-        }, fadeMs);
-        return;                                          // stays busy: the buttons take over
-      }
-
-      if (isLast) {
+      if (!isLast) {
+        setTimeout(() => show(++index), fadeMs);
+      } else if (choices) {
+        setTimeout(() => setVisible(choices, true), fadeMs);   // Yes / No appear
+      } else {
         goTo(NEXT_PAGE);
-        return;
       }
-
-      setTimeout(() => {
-        index++;
-        show(index);
-      }, fadeMs);
-
     }
 
-    // Buttons only react once they are showing
+    // buttons only react once they are showing; one without data-next does nothing yet
     if (choices) {
-
       choices.querySelectorAll('.choice').forEach(btn => {
-
         btn.addEventListener('click', () => {
-
-          if (!choices.classList.contains('is-visible')) return;
-          if (!btn.dataset.next) return;                 // e.g. No: nothing yet
-
-          choices.classList.remove('is-visible');
-          choices.style.opacity = '0';
-          choices.style.pointerEvents = 'none';
+          if (!choices.classList.contains('is-visible') || !btn.dataset.next) return;
+          setVisible(choices, false);
           goTo(btn.dataset.next);
-
         });
-
       });
-
     }
 
     window.addEventListener('click', advance);
-
     setTimeout(() => show(0), 400);
 
-  }
-
-  };
-
-  // run once the page's elements exist
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start);
-  } else {
-    start();
   }
 
 })();
