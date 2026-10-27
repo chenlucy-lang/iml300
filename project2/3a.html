@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Title</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Each .line is one screen of text, shown in this order.
+       Click to move to the next.
+       The line with data-video starts step.mp4 (looping) once it is clicked past.
+       After the last line, the text and music fade out and it goes to data-next (3b.html). -->
+  <main class="lines" data-next="3b.html">
+    <p class="line">The stranger guides you to the edge of the city.</p>
+    <p class="line" data-video="step.mp4">The air cools against your skin.</p>
+    <p class="line">The wind has a direction now, and you follow it.</p>
+    <p class="line">Until the pavement gives way to dirt and sand. </p>
+  </main>
+
+  <!-- path.png, tam.mp3 and step.mp4 must be in the same folder as this file -->
+  <script src="3a.js"></script>
+</body>
+</html>

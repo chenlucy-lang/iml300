@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Title</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Each .line is one screen of text, shown in this order.
+       Click to move to the next.
+       The line with data-image swaps the background to open.png when it is clicked past.
+       After the last line, the Yes / No buttons below appear. -->
+  <main class="lines">
+    <p class="line" data-image="open.png">There is a cellar door.</p>
+    <p class="line">Inside it, you glimpse something small: the whites of a child’s eyes.</p>
+    <p class="line">Do you dare to see more?</p>
+  </main>
+
+  <!-- Appear after the last line is clicked past.
+       Yes (yellow glow on hover) goes to 3c.html. No (red glow on hover) has no page yet:
+       add data-next="page.html" to it when you do. -->
+  <div class="choices">
+    <button class="choice" type="button" data-next="3c.html">Yes</button>
+    <button class="choice choice-no" type="button">No</button>
+  </div>
+
+  <!-- door.png and open.png must be in the same folder as this file -->
+  <script src="3b.js"></script>
+</body>
+</html>

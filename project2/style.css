@@ -89,7 +89,8 @@ p, a, span, li, button, input, textarea, label {
 }
 
 /* Every line sits in the same spot; only one is visible at a time */
-.lines .line {
+.lines .line,
+.lines .reply {
   position: absolute;
   margin: 0;
   padding: 0 1.5rem;
@@ -100,7 +101,8 @@ p, a, span, li, button, input, textarea, label {
   transition: opacity 1.4s ease;   /* fade length: 1a.js reads this */
 }
 
-.lines .line.is-visible {
+.lines .line.is-visible,
+.lines .reply.is-visible {
   opacity: 1;                 /* 1a.js adds/removes this class */
 }
 
@@ -151,4 +153,34 @@ p, a, span, li, button, input, textarea, label {
     0 0 18px rgba(255, 200, 40, 0.8),
     0 0 38px rgba(255, 170, 0, 0.6);
   outline: none;
+}
+
+/* "No" glows red instead of yellow (3b.html) */
+.choices .choice.choice-no:hover,
+.choices .choice.choice-no:focus-visible {
+  color: #ff4a4a;
+  text-shadow:
+    0 0 6px rgba(255, 74, 74, 0.95),
+    0 0 18px rgba(255, 40, 40, 0.8),
+    0 0 38px rgba(220, 0, 0, 0.6);
+  outline: none;
+}
+
+/* A line with class "flash-red" slowly flashes red while it is on screen (3c.html) */
+.lines .line.flash-red.is-visible {
+  animation: flash-red 3s ease-in-out infinite;   /* 3s per flash: raise it to go slower */
+}
+
+@keyframes flash-red {
+  0%, 100% {
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  }
+  50% {
+    color: #ff2a2a;
+    text-shadow:
+      0 0 6px rgba(255, 42, 42, 0.9),
+      0 0 18px rgba(255, 20, 20, 0.7),
+      0 0 38px rgba(200, 0, 0, 0.5);
+  }
 }
