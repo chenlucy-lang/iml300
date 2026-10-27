@@ -2,6 +2,7 @@
  * end1.js
  *
  * Background: away.png
+ * Audio: pour.mp3
  *
  * The image follows the mouse with smooth easing (same as 3c.js, but with no
  * particle reaction in the middle).
@@ -13,6 +14,7 @@
  *
  * Usage:
  * <script src="end1.js"></script>
+ * (away.png and pour.mp3 must be in the same folder as end1.html.)
  *
  * Patched: the whole script now waits for the page to finish loading (so it
  * works even if the <script> tag is in <head>), and lines / buttons get their
@@ -27,9 +29,6 @@
 
   const IMAGE_SRC = 'away.png';
 
-
-  // ---------------- SETTINGS ----------------
-
   // Mouse-follow animation
   const DISTANCE = 0.012;
   const EASE = 25;
@@ -38,6 +37,15 @@
 
   // Background swap (only used by a line with data-image)
   const IMAGE_FADE_S = 1.4;
+
+
+
+  // ---------------- AUDIO SETTINGS ----------------
+
+  const AUDIO_SRC = 'pour.mp3';
+  const AUDIO_LOOP = false;         // true: repeat until the page changes; false: play once
+  const AUDIO_FADE_IN_MS = 1400;    // gentle fade-in when it starts
+  const AUDIO_VOLUME = 1;           // 0 to 1
 
 
 
@@ -81,6 +89,117 @@
   let changed = false;          // the swap only happens once
   let ready = false;
   let dpr = 1;
+
+
+
+  // ---------------- AUDIO ----------------
+  // pour.mp3 starts on the first mouse movement, tap or click (browsers often
+  // block sound until the person interacts with the page).
+
+  const audio = new Audio(AUDIO_SRC);
+
+  audio.loop = AUDIO_LOOP;
+  audio.preload = 'auto';
+  audio.volume = 0;                 // starts silent, then fades up
+
+  audio.addEventListener('error', () => {
+    console.warn('end1.js: Could not load ' + AUDIO_SRC);
+  });
+
+  let audioStarted = false;
+  let audioPending = false;
+  let audioFading = false;
+
+
+  function fadeInAudio(ms) {
+
+    const t0 = performance.now();
+
+    const timer = setInterval(() => {
+
+      if (audioFading) {
+        clearInterval(timer);
+        return;
+      }
+
+      const p = Math.min(1, (performance.now() - t0) / ms);
+
+      audio.volume = p * AUDIO_VOLUME;
+
+      if (p >= 1) clearInterval(timer);
+
+    }, 30);
+
+  }
+
+
+  function startAudio() {
+
+    if (audioStarted || audioPending || audioFading) return;
+
+    audioPending = true;
+
+    const p = audio.play();
+
+    if (p && p.then) {
+
+      p.then(() => {
+
+        audioStarted = true;
+        audioPending = false;
+
+        fadeInAudio(AUDIO_FADE_IN_MS);
+
+      }).catch(() => {
+
+        // Browser refused sound before a click/tap/key press.
+        // Try again on the next movement or click.
+        audioPending = false;
+
+      });
+
+    } else {
+
+      audioStarted = true;
+      audioPending = false;
+
+      fadeInAudio(AUDIO_FADE_IN_MS);
+
+    }
+
+  }
+
+
+  // Smoothly lowers the volume to silence over `ms`, then stops the track.
+  function fadeOutAudio(ms) {
+
+    audioFading = true;             // stops later movement from restarting it
+
+    const startVol = audio.volume;
+    const t0 = performance.now();
+
+    const timer = setInterval(() => {
+
+      const p = Math.min(1, (performance.now() - t0) / ms);
+
+      audio.volume = startVol * (1 - p);
+
+      if (p >= 1) {
+        clearInterval(timer);
+        audio.pause();
+      }
+
+    }, 30);
+
+  }
+
+
+  window.addEventListener('mousemove', startAudio);
+  window.addEventListener('touchstart', startAudio, { passive: true });
+  window.addEventListener('touchmove', startAudio, { passive: true });
+  window.addEventListener('click', startAudio);   // a click always counts as permission
+
+  startAudio();                                   // try straight away (works if the browser allows it)
 
 
 
@@ -309,6 +428,8 @@
   // a button without one does nothing yet.
   // With no .choices, a data-next on the <main class="lines"> tag is used instead,
   // and with neither, the last line just stays.
+  //
+  // When the page is left (a button or data-next), pour.mp3 fades out with it.
 
   const lines = Array.from(document.querySelectorAll('.line'));
   const holder = document.querySelector('.lines[data-next]');
@@ -363,6 +484,8 @@
 
       if (leaving) return;
       leaving = true;
+
+      fadeOutAudio(fadeMs);                              // sound fades as the screen does
 
       setTimeout(() => {
         window.location.href = page;
