@@ -13,9 +13,15 @@
  *
  * Usage:
  * <script src="end1.js"></script>
+ *
+ * Patched: the whole script now waits for the page to finish loading (so it
+ * works even if the <script> tag is in <head>), and lines / buttons get their
+ * opacity set directly, so they show even if style.css has no .is-visible rule.
  */
 
 (() => {
+
+  const start = () => {
 
   // ---------------- IMAGE ----------------
 
@@ -294,7 +300,6 @@
   // ---------------- TEXT SEQUENCE ----------------
   // Every element with class "line" is one screen of text, in page order.
   // The first one fades in by itself; a click fades it out and brings in the next.
-  // Without this, the lines stay invisible (style.css starts them at opacity 0).
   //
   // A line with data-image="other.png" swaps the background to that picture when
   // it is clicked past.
@@ -310,12 +315,29 @@
   const NEXT_PAGE = holder && holder.dataset.next;
   const choices = document.querySelector('.choices');
 
+  console.log('end1.js: found ' + lines.length + ' .line element(s)');
+
+  if (!lines.length) {
+    console.warn('end1.js: no elements with class "line" found, so there is no text to show.');
+  }
+
   if (lines.length) {
 
-    // Fade length comes from the CSS transition, so it's set in one place
+    // Fade length comes from the CSS transition, so it's set in one place.
+    // If the CSS has no transition (0s), 1.4s is used.
     const fadeMs = (
       parseFloat(getComputedStyle(lines[0]).transitionDuration) || 1.4
     ) * 1000;
+
+    // Shows or hides an element. Sets the class AND the opacity directly, so it
+    // works even if style.css has no .is-visible rule.
+    function setVisible(el, on) {
+
+      el.classList.toggle('is-visible', on);
+      el.style.transition = 'opacity ' + (fadeMs / 1000) + 's ease';
+      el.style.opacity = on ? '1' : '0';
+
+    }
 
     let index = 0;
     let busy = true;
@@ -329,7 +351,7 @@
     function show(i) {
 
       busy = true;
-      lines[i].classList.add('is-visible');
+      setVisible(lines[i], true);
 
       setTimeout(() => {
         busy = false;
@@ -357,13 +379,18 @@
       if (isLast && !choices && !NEXT_PAGE) return;      // nothing after the last line
 
       busy = true;
-      lines[index].classList.remove('is-visible');
+      setVisible(lines[index], false);
 
       // this line swaps the background as it goes out
       if (lines[index].dataset.image) changeImage(lines[index].dataset.image);
 
       if (isLast && choices) {                           // last line gone -> Yes / No appear
-        setTimeout(() => choices.classList.add('is-visible'), fadeMs);
+        setTimeout(() => {
+          choices.classList.add('is-visible');
+          choices.style.transition = 'opacity ' + (fadeMs / 1000) + 's ease';
+          choices.style.opacity = '1';
+          choices.style.pointerEvents = 'auto';
+        }, fadeMs);
         return;                                          // stays busy: the buttons take over
       }
 
@@ -390,6 +417,8 @@
           if (!btn.dataset.next) return;                 // e.g. No: nothing yet
 
           choices.classList.remove('is-visible');
+          choices.style.opacity = '0';
+          choices.style.pointerEvents = 'none';
           goTo(btn.dataset.next);
 
         });
@@ -402,6 +431,15 @@
 
     setTimeout(() => show(0), 400);
 
+  }
+
+  };
+
+  // run once the page's elements exist
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
   }
 
 })();
