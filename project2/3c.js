@@ -18,8 +18,6 @@
  */
 (() => {
 
-  // ---------------- SETTINGS ----------------
-
   const IMAGE_SRC = 'eyes.png';
 
   // mouse-follow
