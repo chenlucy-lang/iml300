@@ -1,54 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Q's Homepage</title>
-  <link rel="stylesheet" href="style1.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lucy Chen</title>
+  <link rel="stylesheet" href="style1.css">
 </head>
+<body>
 
-  <body>
-    <div>
-      <h1>Lucy Chen</h1>
-      <!--Update with your name-->
-      <p>
-        This is my website for <i>IML300 class</i>. 
-      </p>
-      <p>Lucy Chen is a Shanghai and Los Angeles-based multidisciplinary designer working at the intersection of printmaking, digital media, and 3D design. Rooted in a fine arts background, her practice explores how form, texture, and narrative interact across mediums. She studies Media Arts and Practice at the School of Cinematic Arts, University of Southern California.</p>
-    </div>
-    <div>
-  <img src="lucy.jpg" alt="Lucy Chen" width="300" />
-</div>
-  <h1>My Work</h1>
-<a href="#" class="hover-underline">Hover MEEE!!!</a>
-      <img src="gallery.png" alt="Lucy Chen" width="500" />
-    <div>
-      <h1>Presentation</h1>
-      <a href="">Pecha Kucha: Lorem Ipsum</a>
-    </div>
-    <div>
-      <h1>Projects</h1>
-      <h2>Project 1: Interactive Audio & Visual with p5.js</h2>
-      <a href="">Final: Lorem Ipsum</a>
-      <h2>Project 2: HyperNarrative</h2>
-      <a href="">Concept</a><br />
-      <a href="">Final: Lorem Ipsum</a>
-      <h2>Project 3: Networked Care</h2>
-      <a href="">Final: Lorem Ipsum</a>
-    </div>
-
-    <div>
-      <h1>Exercises</h1>
-      <ul>
-        <li><a href="">p5.js sketch 1</a></li>
-        <li><a href="">p5.js sketch 2</a></li>
-        <li><a href="">p5.js sketch 3</a></li>
-        <li><a href="">p5.js sketch 4</a></li>
+  <nav class="elevator" aria-label="Primary">
+    <div class="track">
+      <div class="rail"><div class="progress"></div></div>
+      <ul class="line">
+        <li style="--x: 26%">
+          <a class="stop active" href="#work" aria-current="true">
+            <span class="btn">1</span><span class="label">work</span>
+          </a>
+        </li>
+        <li style="--x: 50%">
+          <a class="stop" href="#sandbox">
+            <span class="btn">2</span><span class="label">sandbox</span>
+          </a>
+        </li>
+        <li style="--x: 74%">
+          <a class="stop" href="about.html">
+            <span class="btn">3</span><span class="label">about</span>
+          </a>
+        </li>
       </ul>
     </div>
+  </nav>
 
-    <!--add a h1 element called 'Thoughts' Below-->
-    <h1>Thoughts</h1>
+  <div class="page">
 
-    <footer>Fall, 2026</footer>
-  </body>
+    <!-- Left column -->
+    <aside class="sidebar">
+      <a class="home-link" href="#work" aria-label="Back to work">
+        <img class="home" src="home1.png" alt="Lucy Chen">
+      </a>
+
+      <p class="bio">
+        is a Shanghai and Los Angeles based designer interested in curating fun experiences!
+      </p>
+
+      <div class="info">
+        <h3>@Haute Magazine</h3>
+        <p class="value">Creative Director</p>
+      </div>
+
+      <div class="info">
+        <h3>@USC</h3>
+        <p class="value">Media Arts &amp; Tech!</p>
+      </div>
+    </aside>
+
+    <!-- Middle + right columns: one row per project -->
+    <main class="content">
+
+      <section id="work">
+        <article class="project">
+          <div class="project-text">
+            <h2 class="project-title"><span class="strong">01 Project Name</span> Subtitle</h2>
+            <p class="tags">Tag one, Tag two, Tag three</p>
+            <p class="desc">A short description of the project goes here, two or three lines long.</p>
+            <p class="year">2025</p>
+            <a class="more" href="#">See more</a>
+          </div>
+          <!-- swap the div for: <img class="project-img" src="project1.png" alt="Project name"> -->
+          <div class="project-img placeholder"></div>
+        </article>
+
+        <article class="project">
+          <div class="project-text">
+            <h2 class="project-title"><span class="strong">02 Project Name</span> Subtitle</h2>
+            <p class="tags">Tag one, Tag two, Tag three</p>
+            <p class="desc">A short description of the project goes here, two or three lines long.</p>
+            <p class="year">2026 &mdash; In Progress</p>
+            <a class="more" href="#">See more</a>
+          </div>
+          <div class="project-img placeholder"></div>
+        </article>
+      </section>
+
+      <section id="sandbox">
+        <article class="project">
+          <div class="project-text">
+            <h2 class="project-title"><span class="strong">03 Creative Piece</span> Subtitle</h2>
+            <p class="tags">Tag one, Tag two</p>
+            <p class="desc">A short description of the piece goes here.</p>
+            <p class="year">2025</p>
+            <a class="more" href="#">See more</a>
+          </div>
+          <div class="project-img placeholder"></div>
+        </article>
+      </section>
+
+      <section id="about">
+        <article class="project">
+          <div class="project-text">
+            <h2 class="project-title"><span class="strong">About</span></h2>
+            <p class="desc">Write a little about yourself here.</p>
+          </div>
+          <div class="project-img placeholder"></div>
+        </article>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+
+</body>
 </html>

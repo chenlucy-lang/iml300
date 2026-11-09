@@ -52,7 +52,7 @@
     document.head.insertAdjacentHTML('beforeend', '<style>.lines { z-index: 1; }</style>');
 
 
-    // ---------------- BACKGROUND ----------------
+    //background
 
     const canvas = document.createElement('canvas');
     Object.assign(canvas.style, {
