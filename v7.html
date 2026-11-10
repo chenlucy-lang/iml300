@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alt-Text as Poetry &mdash; Lucy Chen</title>
+  <link rel="stylesheet" href="style1.css">
+</head>
+<body>
+
+  <nav class="elevator" aria-label="Primary">
+    <div class="track">
+      <div class="rail"><div class="progress"></div></div>
+      <ul class="line">
+        <li style="--x: 26%">
+          <a class="stop" href="index.html#work">
+            <span class="btn">1</span><span class="label">work</span>
+          </a>
+        </li>
+        <li style="--x: 50%">
+          <a class="stop active" href="index.html#sandbox" aria-current="true">
+            <span class="btn">2</span><span class="label">sandbox</span>
+          </a>
+        </li>
+        <li style="--x: 74%">
+          <a class="stop" href="about.html">
+            <span class="btn">3</span><span class="label">about</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <!-- Left column: same fixed sidebar as the main page -->
+    <aside class="sidebar">
+      <h2 class="project-title"><span class="strong">Alt-Text as Poetry</span></h2>
+      <p class="desc">
+        I was inspired by Coklyat and Finnegan’s Alt-Text as Poetry reading. Alt-text is central to web accessibility, yet it’s often relegated to a mere compliance checkbox or a chore on the developer’s end. But through engaging with the text, I admired how the project reframes it as an expressive act, one that also raises awareness of the experiences of blind and low-vision people. In response, I built a website where hovering over an image reveals a poem in the form of hypertext. This invites exploration while drawing attention to hypertext itself as a mode of communication.
+      </p>
+    </aside>
+
+    <!-- Right: the website, using all the screen that's left -->
+    <iframe
+      class="embed"
+      src="https://living-poems-in-color.lovable.app"
+      title="Alt-Text as Poetry website">
+    </iframe>
+
+  </div>
+
+  <script>
+    // Light up the sandbox floor: stretch the solid blue line to the active button
+    const track    = document.querySelector('.track');
+    const progress = document.querySelector('.progress');
+
+    function fitProgress() {
+      const btn = document.querySelector('.stop.active .btn');
+      const t = track.getBoundingClientRect();
+      const b = btn.getBoundingClientRect();
+      progress.style.width = (b.left + b.width / 2 - t.left) + 'px';
+    }
+
+    fitProgress();
+    window.addEventListener('load', fitProgress);
+    window.addEventListener('resize', fitProgress);
+  </script>
+
+</body>
+</html>
