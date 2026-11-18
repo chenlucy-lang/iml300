@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chip</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+
+    body {
+      display: grid;
+      place-items: center;
+      background: #f2f2f0;
+      font-family: system-ui, sans-serif;
+    }
+
+    /* wrapper shrinks to the image so % positions line up with it */
+    .stage {
+      position: relative;
+      display: inline-block;
+      line-height: 0;
+    }
+
+    .chip {
+      display: block;
+      max-width: 90vw;
+      max-height: 90vh;
+      width: auto;
+      height: auto;
+    }
+
+    /* round hotspots sitting on top of the two circle buttons */
+    .spot {
+      position: absolute;
+      width: 8.5%;
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 2px solid transparent;
+      transition: background .15s, border-color .15s;
+    }
+
+    .spot:hover,
+    .spot:focus-visible {
+      background: rgba(255, 255, 255, .3);
+      border-color: #fff;
+      outline: none;
+    }
+
+    .spot .tip {
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: #111;
+      color: #fff;
+      font-size: 16px;
+      line-height: 1;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s;
+    }
+
+    .spot:hover .tip,
+    .spot:focus-visible .tip { opacity: 1; }
+
+    /* top button: USER KEY (S1) */
+    .history { left: 60.7%; top: 13.6%; }
+    /* bottom button: RESET (S2) */
+    .taiwan  { left: 61.3%; top: 87.5%; }
+  </style>
+</head>
+<body>
+
+  <div class="stage">
+    <img class="chip" src="chip.jpg" alt="Circuit board with an STM32 chip">
+
+    <a class="spot history" href="history.html" aria-label="history">
+      <span class="tip">history</span>
+    </a>
+
+    <a class="spot taiwan" href="taiwan.html" aria-label="taiwan">
+      <span class="tip">taiwan</span>
+    </a>
+  </div>
+
+</body>
+</html>
