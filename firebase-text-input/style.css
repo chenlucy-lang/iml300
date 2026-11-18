@@ -11,12 +11,13 @@ body {
 }
 
 input {
-  height: 40px;
+  height: 100px;
   border: 1px solid 1E19BD;
+  background-color: red;
   border-radius: 15px;
   background-color: transparent;
   padding: 5px 10px 5px 10px;
-  margin-bottom: 20px;
+  margin-bottom: 60px;
 }
 
 #chat-container{
@@ -24,7 +25,7 @@ input {
 /*   background-color: yellow; */
   
   margin:auto;
-  width:70vw;
+  width:90vw;
   display: grid;
   grid-template-columns: auto auto  auto; 
 }
