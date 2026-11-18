@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Firebase Text Input Demo</title>
+
+    <!-- Include firebase scripts from CDN      -->
+    <script src="https://www.gstatic.com/firebasejs/8.2.3/firebase.js"></script>
+
+    <!-- Import the webpage's javascript file -->
+    <script src="script.js" defer></script>
+
+    <!-- Import the webpage's stylesheet -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- This input form controls submission of text input -->
+    <div class="container">
+
+
+      <form id="text-input-form" onsubmit="return false">
+        <input type="text" id="text-input-entry" placeholder="tell me something funny?" />
+        <input
+          type="submit"
+          id="text-input-submit"
+          onclick="submitlock()"
+          value="Share"
+        />
+      </form>
+
+      <div id="chat-container"></div>
+    </div>
+  </body>
+</html>
