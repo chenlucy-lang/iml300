@@ -91,17 +91,17 @@
   }
 
   var canvas = document.getElementById('bg');
-  // Pin the canvas behind the page no matter what the CSS says
+  // Pin the canvas above the black page background but under all content (z-index 2)
   canvas.style.cssText =
-    'position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;';
+    'position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;';
   var ctx = canvas.getContext('2d');
   var W, H, cw, ch, cols, font, boldFont, cLand, cOcean, tcx, tcy;
   var land = [], ocean = [], tw = [];
 
   function readColors() {
     var cs = getComputedStyle(document.documentElement);
-    cLand = cs.getPropertyValue('--muted').trim() || '#666';
-    cOcean = cs.getPropertyValue('--ascii').trim() || '#b9b9b9';
+    cLand = cs.getPropertyValue('--muted').trim() || '#a8a8a8';
+    cOcean = cs.getPropertyValue('--ascii').trim() || '#7a7a7a';
   }
 
   function setup() {
@@ -207,9 +207,6 @@
   addEventListener('resize', function () {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () { setup(); if (reduce) draw(0); }, 100);
-  });
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
-    readColors(); if (reduce) draw(0);
   });
 
   /* ================= Tilt + glare on the card ================= */

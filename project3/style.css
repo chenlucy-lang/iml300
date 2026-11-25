@@ -1,56 +1,58 @@
+/* Always black background, white/gray text (no light mode) */
 :root{
-  --bg:#fff;--fg:#222;--muted:#666;--ascii:#b9b9b9;--pill:#fff;--line:#d9d9d9;
-  --box1:#c9c9c9;--box2:#9e9e9e;
+  color-scheme:dark;
+  --bg:#000;
+  --fg:#f2f2f2;       /* main text: near-white */
+  --muted:#a8a8a8;    /* secondary text + map land characters: gray */
+  --ascii:#7a7a7a;    /* map ocean dots: gray */
+  --pill:#0a0a0a;     /* nav bar fill */
+  --line:#2c2c2c;     /* nav bar outline */
+  --box1:#2a2a2a;     /* scrolling rectangles */
+  --box2:#161616;
   box-sizing:border-box;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#0e0e10;--fg:#eee;--muted:#999;--ascii:#4a4a50;--pill:#16161a;--line:#34343a;--box1:#3a3a40;--box2:#26262b;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0e0e10;--fg:#eee;--muted:#999;--ascii:#4a4a50;--pill:#16161a;--line:#34343a;--box1:#3a3a40;--box2:#26262b;
 }
 *{box-sizing:border-box}
 
-/* Lock the page to exactly one screen: no scrolling at all */
-html,body{
+/* Lock the page to exactly one screen: no scrolling at all.
+   Black lives on <html> only, so the map canvas can show above it. */
+html{
   height:100%;
   overflow:hidden;
   overscroll-behavior:none;
+  background:var(--bg);
 }
 body{
-  margin:0;background:var(--bg);color:var(--fg);
+  margin:0;
+  background:transparent;
+  color:var(--fg);
   font-family:"Inter",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
-  height:100vh;
+  height:100%;
   height:100dvh;
+  overflow:hidden;
   display:flex;flex-direction:column;
-  position:relative;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
 }
 
-/* Animated world-map background (drawn by main.js): fixed behind everything */
+/* Animated world-map background (drawn by main.js): fixed, under all content */
 #bg{
   position:fixed;top:0;left:0;
   width:100%;height:100%;
-  z-index:-1;pointer-events:none;
+  z-index:0;pointer-events:none;
 }
 
-/* Nav */
+/* Nav: just 半导体, centered */
 nav{
   position:relative;z-index:2;flex:none;
   width:min(1100px,calc(100% - 40px));
   margin:clamp(14px,3.5vh,48px) auto 0;
-  padding:0 20px 0 28px;
+  padding:0 28px;
   height:clamp(52px,8vh,72px);
   border:1px solid var(--line);border-radius:40px;
-  background:var(--pill);display:flex;align-items:center;justify-content:space-between;
-  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  background:var(--pill);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.6);
 }
-nav .name{font-size:clamp(17px,2.9vh,24px);letter-spacing:-1px;font-weight:500;flex:1;white-space:nowrap}
 nav .links{display:flex;align-items:center;justify-content:center;flex:none}
-nav .me{flex:1;text-align:right;font-style:italic;font-size:clamp(15px,2.4vh,20px);color:var(--fg);text-decoration:none;white-space:nowrap}
 
 /* 半导体 in the middle; hover slides it left and reveals the English title */
 nav .semi{
@@ -69,7 +71,7 @@ nav .semi .reveal{
   transition:max-width .7s cubic-bezier(.2,.8,.2,1),opacity .45s ease;
 }
 nav .semi .bar{margin:0 .7em;color:var(--muted);flex:none}
-nav .semi .en{flex:none;font-size:.9em;letter-spacing:.2px}
+nav .semi .en{flex:none;font-size:.9em;letter-spacing:.2px;color:var(--muted)}
 nav .semi:hover .reveal,
 nav .semi:focus-visible .reveal{max-width:26em;opacity:1}
 
@@ -96,12 +98,12 @@ main{
   transform:perspective(900px) rotateX(0) rotateY(0);
   transition:transform .5s cubic-bezier(.2,.8,.2,1),box-shadow .3s;
   will-change:transform;
-  box-shadow:0 20px 50px rgba(0,0,0,.25);
+  box-shadow:0 20px 50px rgba(0,0,0,.7);
   touch-action:none;
 }
 .card.active{
   transition:transform .08s linear,box-shadow .3s;
-  box-shadow:0 30px 70px rgba(0,0,0,.4);
+  box-shadow:0 30px 70px rgba(0,0,0,.85);
 }
 .card img{
   display:block;
@@ -143,7 +145,6 @@ main{
   nav .semi .reveal{transition:none}
 }
 @media (max-width:760px){
-  nav .name{font-size:15px}
   nav .semi .en{display:none}
   nav .semi .bar{display:none}
   main{padding:0 14px}
